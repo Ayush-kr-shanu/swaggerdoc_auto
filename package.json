@@ -1,0 +1,23 @@
+{
+  "name": "swaggerdoc-auto",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^5.0.0",
+    "swagger-ui-express": "^4.6.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/swagger-ui-express": "^4.1.8",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist"
+  ]
+}
