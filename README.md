@@ -1,121 +1,169 @@
-## 📘 `README.md`
-
-````markdown
 # swaggerdoc-auto
 
-🚀 **swaggerdoc-auto** is a plug-and-play library that generates fully automated OpenAPI (Swagger) documentation for your Node.js (TypeScript) backend using **Zod** and **zod-openapi** — with minimal setup and zero boilerplate in your route files.
+Automated Swagger documentation for Node.js/Express with support for multiple validators.
 
----
+## Features
 
-## ✨ Features
+- ✅ Zero-config for Zod schemas
+- 🛠️ Supports any validator via simple adapters
+- 📁 Load schemas from files
+- 🏗️ Modular route registration
+- 🎨 Beautiful Swagger UI
 
-- ✅ No manual Swagger comments
-- ✅ Centralized, modular API registration
-- ✅ Built on Zod + OpenAPI 3.0
-- ✅ Fully typed and TS-first
-- ✅ Supports `express`, `zod-openapi`, and `swagger-ui-express` internally — no need to install separately!
-
----
-
-## 📦 Installation
+## Installation
 
 ```bash
 npm install swaggerdoc-auto
-````
-
-> No need to install `zod`, `swagger-ui-express`, or `zod-openapi` — it's all included!
-
----
-
-## 🚀 Quick Usage
-
-### 1. Define your validation schema
-
-```ts
-// auth.validation.ts
-import { z } from "zod";
-import { withMeta } from "swaggerdoc-auto";
-
-export const signupSchema = withMeta(
-  z.object({
-    name: z.string(),
-    email: z.string().email(),
-    password: z.string().min(6),
-  }),
-  { title: "SignupSchema" }
-);
+# or
+yarn add swaggerdoc-auto
 ```
 
----
+## Basic Usage (Zod)
 
-### 2. Register schema and route
-
-```ts
-// auth.openapi.ts
-import { registerSchema, registerPath } from "swaggerdoc-auto";
-import { signupSchema } from "./auth.validation";
-
-registerSchema("SignupSchema", signupSchema);
-
-registerPath({
-  method: "post",
-  path: "/api/auth/signup",
-  summary: "User Signup",
-  requestBodySchema: signupSchema,
-  responses: {
-    201: "User created",
-    400: "Validation error"
-  }
-});
-```
-
----
-
-### 3. Generate and serve Swagger docs
-
-```ts
-// app.ts
-import express from "express";
-import { serveSwagger } from "swaggerdoc-auto";
+```typescript
+import express from 'express';
+import { z } from 'zod';
+import { setupSwagger } from 'swaggerdoc-auto';
 
 const app = express();
 
-app.use(express.json());
-
-// Mount Swagger at /docs
-serveSwagger(app, {
-  title: "School ERP API",
-  version: "1.0.0",
-  description: "Auto-generated Swagger docs",
+// Define schemas
+const UserSchema = z.object({
+  id: z.string(),
+  name: z.string()
 });
 
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+// Setup Swagger
+setupSwagger(app, {
+  title: 'My API',
+  version: '1.0.0',
+  schemas: [UserSchema]
+});
+
+app.listen(3000);
 ```
 
----
+## Using Other Validators
 
-## 📂 Modular Folder Example
+### Joi Example
 
-```bash
-src/
-├── modules/
-│   └── auth/
-│       ├── auth.validation.ts
-│       └── auth.openapi.ts
-├── docs/
-│   └── registry.ts  # Internal (handled by swaggerdoc-auto)
+```typescript
+import Joi from 'joi';
+import { setupSwagger, createJoiAdapter } from 'swaggerdoc-auto';
+
+const joiAdapter = createJoiAdapter(Joi);
+const UserSchema = Joi.object({
+  id: Joi.string(),
+  name: Joi.string()
+}).label('User');
+
+setupSwagger(app, {
+  title: 'My API',
+  version: '1.0.0',
+  schemas: [UserSchema],
+  schemaAdapter: joiAdapter
+});
 ```
 
----
+### Yup Example
 
-## 📄 License
+```typescript
+import * as yup from 'yup';
+import { setupSwagger, createYupAdapter } from 'swaggerdoc-auto';
+
+const yupAdapter = createYupAdapter(yup);
+const UserSchema = yup.object({
+  id: yup.string(),
+  name: yup.string()
+}).meta({ name: 'User' });
+
+setupSwagger(app, {
+  title: 'My API',
+  version: '1.0.0',
+  schemas: [UserSchema],
+  schemaAdapter: yupAdapter
+});
+```
+
+## Advanced Usage
+
+### Loading Schemas from File
+
+```typescript
+// schemas/user.ts
+export const UserSchema = z.object({
+  id: z.string(),
+  name: z.string()
+});
+
+// main.ts
+setupSwagger(app, {
+  title: 'My API',
+  version: '1.0.0',
+  schemasPath: './schemas/user.ts'
+});
+```
+
+### Custom Validator Adapter
+
+```typescript
+const myAdapter = {
+  isSchema: (schema) => /* your validation logic */,
+  getSchemaName: (schema) => /* get schema name */
+};
+
+setupSwagger(app, {
+  title: 'My API',
+  version: '1.0.0',
+  schemaAdapter: myAdapter
+});
+```
+
+### Route Registration
+
+```typescript
+// routes/user.ts
+import { registry } from 'swaggerdoc-auto';
+
+export default function registerUserRoutes() {
+  registry.registerPath({
+    method: 'get',
+    path: '/users',
+    responses: {
+      200: { description: 'List of users' }
+    }
+  });
+}
+
+// main.ts
+setupSwagger(app, {
+  title: 'My API',
+  version: '1.0.0',
+  modules: [require('./routes/user').default]
+});
+```
+
+## API Reference
+
+### `setupSwagger(app: Express, options: SwaggerSetupOptions)`
+
+Main setup function.
+
+**Options:**
+- `title`: API title (required)
+- `version`: API version (required)
+- `description?`: API description
+- `docsPath?`: Path for docs (default: '/docs')
+- `schemas?`: Array of schemas
+- `schemasPath?`: Path to schemas file
+- `modules?`: Array of route registration functions
+- `schemaAdapter?`: Custom schema adapter
+
+### Built-in Adapters
+- `zodAdapter`: Default adapter for Zod
+- `createJoiAdapter(joi)`: Adapter factory for Joi
+- `createYupAdapter(yup)`: Adapter factory for Yup
+
+## License
 
 MIT
-
----
-
-## 🙌 Contributing
-
-Pull requests and issues welcome! Let's simplify Swagger documentation together.
-
-```
