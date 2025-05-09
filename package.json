@@ -1,11 +1,19 @@
 {
   "name": "swaggerdoc-auto",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "type": "module",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "build": "tsc"
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^5.0.0",
@@ -14,8 +22,10 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
+    "@types/node": "^22.15.17",
     "@types/swagger-ui-express": "^4.1.8",
-    "typescript": "^5.3.3"
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
   },
   "files": [
     "dist"

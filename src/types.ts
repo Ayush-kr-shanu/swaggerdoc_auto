@@ -1,15 +1,22 @@
-export interface SchemaAdapter<T = any> {
-  isSchema: (schema: unknown) => schema is T;
-  getSchemaName: (schema: T) => string;
+import { z } from 'zod';
+
+export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
+
+export interface RouteSchema {
+  body?: z.ZodTypeAny;
+  query?: z.ZodTypeAny;
+  params?: z.ZodTypeAny;
+  response?: z.ZodTypeAny;
 }
 
-export interface SwaggerSetupOptions {
+export interface RouteConfig {
+  method: HttpMethod;
+  path: string;
+  schema?: RouteSchema;
+}
+
+export interface SwaggerOptions {
   title: string;
   version: string;
-  description?: string;
   docsPath?: string;
-  schemas?: any[];
-  schemasPath?: string;
-  modules?: (() => void)[];
-  schemaAdapter?: SchemaAdapter;
 }
